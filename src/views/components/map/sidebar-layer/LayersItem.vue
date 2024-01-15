@@ -12,12 +12,30 @@
             </span>
         </span>
 
+
+        <!-- Propriedades e Funções de uma Camada - Invocadas quando se clica na engrenagem de uma camada ativa 
+        Todos o ícones são importados do Material Desing do Google Usando o comando <md-icon>nome_icon</md-icon> 
+        Para alterar os nome bastas ir nos arquivos english.js e prtuguese.js-->
+
         <div v-show="boxView && layerStatus" class="box-options">
+
+            <!-- Desabilitar - Desabilita a camadada sem precisar abrir a tela de Adicionar camadas -->
+
+            <el-tooltip effect="dark"
+                    :content="$t('map.sidebarLayer.options.delete')"
+                    placement="top-end">
+                <md-icon @click.native="disabled()">delete</md-icon>
+            </el-tooltip>
+
+            <!-- Zoom - Centraliza a camada na tela, sejam regiões ou localidades -->
+
             <el-tooltip effect="dark"
                     :content="$t('map.sidebarLayer.options.zoom')"
                     placement="top-end">
                 <md-icon @click.native="extend()">center_focus_strong</md-icon>
             </el-tooltip>
+
+            <!-- Informação da Camada - descrição aprofundada sobre a camada. Abre uma nova tela (componente) -->
 
             <el-tooltip effect="dark"
                     :content="$t('map.sidebarLayer.options.infosLayer')"
@@ -25,17 +43,24 @@
                 <md-icon @click.native="infosLayer()">assignment</md-icon>
             </el-tooltip>
 
+            <!-- Informação sobre os objetos - Funcionalidade que, ao habilitada, permite a seleção de objetos 
+                da camada e apresenta informações específicas do objeto selecionado -->
+
             <el-tooltip effect="dark"
                     :content="$t('map.sidebarLayer.options.infosVector')"
                     placement="top-end">
                 <md-icon :class="getInfo ? 'active' : ''" @click.native="setStatusGetInfo()">info</md-icon>
             </el-tooltip>
 
+            <!-- Mudar a cor - Alterar a cor dos objetos da camada -->
+
             <el-tooltip effect="dark"
                     :content="$t('map.sidebarLayer.options.editColor')"
                     placement="top-end">
                     <el-color-picker v-model="colorVector" show-alpha size="medium"></el-color-picker>
             </el-tooltip>
+
+            <!-- Baixar .shp - baixar o arquivo da camada (formato .shp) -->
 
             <el-tooltip effect="dark"
                     :content="$t('map.sidebarLayer.options.download')"
@@ -48,7 +73,22 @@
     </div>
 </template>
 
+
+
+<!-- ############ SCRIPT- Lógica Da Página ############ -->
+
+
+
 <script>
+
+// Importações necessárias do Add Layer para permitir a deleção
+import axios from 'axios'
+
+import {
+  overlayGroup
+} from '@/views/assets/js/map/overlayGroup'
+//-------------------------------------------------
+
 import { mapState } from 'vuex'
 import {
     emptyStyle,
@@ -83,7 +123,13 @@ export default {
             getInfo: false,
             select: null,
             overlay: null,
-            nameLayer: ''
+            nameLayer: '',
+
+            //Data para fazer a desativação da camada
+            listLayers: [],
+            allLayers: [],
+            btnDisabled: true,
+
         }
     },
     async mounted() {
@@ -97,6 +143,22 @@ export default {
         }
 
         this.getColor()
+
+
+        //MONTANDO os arrays allLayers e listLayers
+        try {
+            let result = await Map.getLayers(null)
+            this.allLayers = result.data.features
+
+            // initialize the list of layers with all available layers
+            this.listLayers = this.allLayers
+
+        }catch (error) {
+            this.$alert(this.$t('map.addLayer.msg.errMsg'), this.$t('map.addLayer.msg.errTitle'), {
+                confirmButtonText: 'OK',
+                type: 'error'
+            })
+        }
     },
     watch: {
         // active and disable the layer
@@ -200,6 +262,26 @@ export default {
 
           }
         },
+
+        //Deastivar Camada
+		disabled() {
+            //if(this.btnDisabled == false)
+            //    this.btnDisabled = true
+
+            overlayGroup.getLayers().forEach(sublayer => {
+                if(sublayer != undefined && sublayer.get('id') != undefined && sublayer.get('id') == this.id) {
+                    overlayGroup.getLayers().remove(sublayer)
+                    this.$store.dispatch('map/setRemoveLayers', this.id)
+                    this.btnDisabled = false
+                    return true
+                }
+            })
+        },
+		
+		
+		
+		// Centraliza a tela para a camada selecionada
+
         extend(){
             this.group.getLayers().forEach(sublayer => {
                 if (sublayer.get('title') === this.title && this.layerStatus) {

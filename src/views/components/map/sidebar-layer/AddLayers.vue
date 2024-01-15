@@ -9,6 +9,8 @@
           </button>
         </div>
 
+        <!-- Barra de Pesquisa das Camadas -->
+
         <div class="modal-body">
           <el-input
             :placeholder="$t('map.addLayer.input')"
@@ -16,8 +18,15 @@
           </el-input>
           <br/>
 
+          <!-- Box da camada com Descrições e Botão de Ativar e Desativar as Camadas
+          A partir da Lista das Camadas Disponíveis (listLayers) é gerada uma lista renderizável de camadas (layers) 
+          A Box pode estar Ativada ou Destativada (class = 'box-layer-info activated' : 'box-layer-info disabled') -->
+
           <article v-for="layer in listLayers" :key="layer.id">
             <div :class="layers.some(id => id == layer.properties.layer_id) ? 'box-layer-info activated' : 'box-layer-info disabled'">
+             
+              <!--Informações Descritivas da Camadas (Titulo, Autores, Palavras-chave e Datas de Inicio e Fim)-->
+             
               <div class="infos">
                 <p><strong>{{ $t('map.addLayer.box.lbTitle') }}:</strong> {{ layer.properties.name }}</p>
                 <p><strong>{{ $t('map.addLayer.box.lbAuthors') }}:</strong>
@@ -55,6 +64,10 @@
 
               </div>
 
+
+              <!-- Botão de Ativar e Desativar a Camada 
+              Caso id da lista renderizável-->              
+
               <div class="btns">
                 <el-button :type="layers.some(id => id == layer.properties.layer_id) ? 'danger' : 'success'"
                               round @click="layers.some(id => id == layer.properties.layer_id) ? disabled(layer) : active(layer)"
@@ -66,6 +79,9 @@
           </article>
         </div>
 
+
+        <!-- Footer - Botão de Fechar -->
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">
             {{ $t('map.addLayer.close') }}
@@ -75,6 +91,9 @@
     </div>
   </div>
 </template>
+
+
+<!-- ############ SCRIPT- Lógica Da Página ############ -->
 
 <script>
 import { mapState } from 'vuex'
@@ -115,6 +134,10 @@ export default {
         allTemporalColumns: [],
       }
     },
+
+
+    //Carregamento do dados das Layers (Preenchimento dos arrays de Data()) e montagem
+
     async mounted() {
       try {
         let result = await Map.getLayers(null)
